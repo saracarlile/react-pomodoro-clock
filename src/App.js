@@ -27,7 +27,7 @@ function TimePanel (props){
         <div>
           <p id="time-left">{props.timeLeft}</p>
         </div>
-        <div><button id="start_stop" onClick={props.countdown}>Start</button><button id="reset" onClick={props.resetCountdown}>Reset</button><button id="stop" onClick={props.stopCountdown}>Stop</button></div>
+        <div><button id="start_stop" onClick={props.stopStartCountdown}>Start</button><button id="reset" onClick={props.resetCountdown}>Reset</button></div>
       </div>
     );
 }
@@ -53,10 +53,8 @@ class App extends Component {
     this.decrementBreak = this.decrementBreak.bind(this);
     this.incrementBreak = this.incrementBreak.bind(this);
     this.resetCountdown = this.resetCountdown.bind(this);
-    this.toggleWorkBreakSession = this.toggleWorkBreakSession.bind(this);
     this.updateText = this.updateText.bind(this);
-    this.countdown = this.countdown.bind(this);
-    this.stopCountdown = this.stopCountdown.bind(this);
+    this.stopStartCountdown = this.stopStartCountdown.bind(this);
     
   }
 
@@ -131,7 +129,7 @@ class App extends Component {
     }
   }
 
-  resetCountdown = () => {      
+  resetCountdown = () => {  
     this.setState({ 
       sessionLength: 25,
       breakLength: 5, 
@@ -139,46 +137,58 @@ class App extends Component {
       timerRunning: false,
       timeLeft: "25:00"
     });
+    window.clearInterval(myTimer);   
   };
 
-  toggleWorkBreakSession = () => {
-    if(this.state.workOrBreak === "Work Session" ) {
-      this.setState({
-        workOrBreak: "Break Session"
-      })
-    }
-    if(this.state.workOrBreak === "Break Session" ) {
-      this.setState({
-        workOrBreak: "Work Session"
-      })
-    }
-  }
+
 
   updateText = () => {
-
+    
     if (this.state.workOrBreak === "Work Session") {
       let readTime = this.state.timeLeft;
       let splitTime = readTime.split(":");
       let minsInt = parseInt(splitTime[0], 10);
       let secsInt = parseInt(splitTime[1], 10);
       let total = minsInt * 60 + secsInt;
-      if (total > 0) {
-        total--;
+      total--;
+      if(total >= 60) {
         let seconds = total % 60;
         if (seconds < 10) {
           seconds = "0" + seconds;
         }
         let timeLeftCalc = Math.floor(total / 60) + ":" + seconds;  //mins + ":" + seconds
         this.setState({
-          timeLeft: timeLeftCalc
+          timeLeft: timeLeftCalc.toString()
         })
       }
-      if (total <= 0) {
-        this.toggleWorkBreakSession();
-        let timeLeftSet = this.state.breakLength + ":00";
+      if(total < 60) {
+        let clockTime;
+        if (total < 10) {
+           clockTime = "00:0" + total.toString();  
+        }
+        else {
+          clockTime = "00:" + total.toString();
+        }
         this.setState({
+          timeLeft: clockTime
+        })
+      }
+      if (total === -1) {  //after timer reaches 00:00
+        window.clearInterval(myTimer);
+        let timeLeftSet;
+        if(this.state.breakLength >= 10) {
+          timeLeftSet = this.state.breakLength.toString() + ":00";
+        }
+        if(this.state.breakLength < 10) {
+          timeLeftSet = "0" + this.state.breakLength.toString() + ":00";
+        }
+        this.setState({
+          workOrBreak: "Break Session",
           timeLeft: timeLeftSet
         })
+        setTimeout(() => {
+          myTimer = window.setInterval(this.updateText, 1000);
+        }, 500);
       }
     }
 
@@ -188,35 +198,65 @@ class App extends Component {
       let splitBreakTime = readBreakTime.split(':');
       let minsIntBreak = parseInt(splitBreakTime[0], 10);
       let secsIntBreak = parseInt(splitBreakTime[1], 10);
-      let totalBreak = minsIntBreak * 60 + secsIntBreak;
-      if (totalBreak > 0) {
-        totalBreak--;
-        let seconds = totalBreak % 60;
+      let total = minsIntBreak * 60 + secsIntBreak;
+      total--;
+      if(total >= 60) {
+        let seconds = total % 60;
         if (seconds < 10) {
           seconds = "0" + seconds;
         }
-        let timeLeftCalc = Math.floor(totalBreak / 60) + ":" + seconds;  //mins + ":" + seconds
+        let timeLeftCalc = Math.floor(total / 60) + ":" + seconds;  //mins + ":" + seconds
         this.setState({
-          timeLeft: timeLeftCalc
+          timeLeft: timeLeftCalc.toString()
         })
       }
-      if (totalBreak <= 0) {
-        this.toggleWorkBreakSession();
-        let timeLeftSet = this.state.SessionLength + ":00";
+      if(total < 60) {
+        let clockTime;
+        if (total < 10) {
+           clockTime = "00:0" + total.toString();  
+        }
+        else {
+          clockTime = "00:" + total.toString();
+        }
         this.setState({
+          timeLeft: clockTime
+        })
+      }
+      if (total === 0) {  //after timer reaches 00:00
+        window.clearInterval(myTimer);
+        let timeLeftSet;
+        if(this.state.sessionLength >= 10) {
+          timeLeftSet = this.state.sessionLength.toString() + ":00";
+        }
+        if(this.state.sessionLength < 10) {
+          timeLeftSet = "0" + this.state.sessionLength.toString() + ":00";
+        }
+        this.setState({
+          workOrBreak: "Work Session",
           timeLeft: timeLeftSet
         })
+        setTimeout(() => {
+          myTimer = window.setInterval(this.updateText, 1000);
+        }, 1000);
       }
     }
   }
 
-  countdown = function () {
-    myTimer = window.setInterval(this.updateText, 1000);
-   };
- 
-   stopCountdown = function () {
-     window.clearInterval(myTimer);
-   };
+  stopStartCountdown = () => {
+    if(this.state.timerRunning === false){
+      myTimer = window.setInterval(this.updateText, 1000);
+      this.setState({
+        timerRunning: true,
+      })
+    }
+    if(this.state.timerRunning === true){
+      window.clearInterval(myTimer);
+      this.setState({
+        timerRunning: false
+      })
+    }
+  }
+
 
 
   render() {
@@ -238,8 +278,7 @@ class App extends Component {
                      workOrBreak={this.state.workOrBreak}
                      resetCountdown={this.resetCountdown}
                      timeLeft={this.state.timeLeft}
-                     countdown={this.countdown}
-                     stopCountdown={this.stopCountdown}
+                     stopStartCountdown={this.stopStartCountdown}
                      />
         </div>
       </div>
