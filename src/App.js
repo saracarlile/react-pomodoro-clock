@@ -28,6 +28,7 @@ function TimePanel (props){
           <p id="time-left">{props.timeLeft}</p>
         </div>
         <div><button id="start_stop" onClick={props.stopStartCountdown}>Start</button><button id="reset" onClick={props.resetCountdown}>Reset</button></div>
+        <audio id="beep" src="https://s3.amazonaws.com/freecodecamp/drums/Chord_3.mp3" ></audio>
       </div>
     );
 }
@@ -55,21 +56,48 @@ class App extends Component {
     this.resetCountdown = this.resetCountdown.bind(this);
     this.updateText = this.updateText.bind(this);
     this.stopStartCountdown = this.stopStartCountdown.bind(this);
-    
+    this.playSound = this.playSound.bind(this);
+    this.stopSound = this.stopSound.bind(this);
   }
+
+
+  playSound = () => {
+    let target = document.getElementById("beep");
+    target.play();
+/*    this.props.setDisplay(this.props.string);
+    target.parentNode.className="drum-pad-active";
+    setTimeout(() => { target.parentNode.className="drum-pad"; }, 1000);*/
+}
+
+stopSound = () => {
+  let target = document.getElementById("beep");
+  target.pause();
+  target.currentTime = 0;
+}
 
 //setState is asynch so move the increment to the setState execution in the lifecycle
 //https://stackoverflow.com/questions/39316376/how-to-use-the-increment-operator-in-react
 
+
   incrementSession = () => {
-    if(this.state.sessionLength + 1 > 60){
+    if(this.state.sessionLength + 1 > 60) {
       return;
     }
-    if(this.state.workOrBreak === "Work Session") {
-      this.setState((prevState, props) => ({
-        sessionLength: prevState.sessionLength + 1,
-        timeLeft: (prevState.sessionLength + 1).toString() + ":00"
-      }));
+    if(this.state.sessionLength <= 8) {
+      if (this.state.workOrBreak === "Work Session") {
+        this.setState((prevState, props) => ({
+          sessionLength: prevState.sessionLength + 1,
+          timeLeft: "0" + (prevState.sessionLength + 1).toString() + ":00"
+        }));
+      }
+    }
+    if(this.state.sessionLength >= 9){
+      if (this.state.workOrBreak === "Work Session") {
+        this.setState((prevState, props) => ({
+          sessionLength: prevState.sessionLength + 1,
+          timeLeft: (prevState.sessionLength + 1).toString() + ":00"
+        }));
+      }
     }
     if(this.state.workOrBreak === "Break Session") {
       this.setState((prevState, props) => ({
@@ -78,32 +106,27 @@ class App extends Component {
     }
   }
 
-  decrementSession = () => {
-    if(this.state.sessionLength - 1 <= 0) {
-      return;
-    }
-    if (this.state.workOrBreak === "Work Session") {
-      this.setState((prevState, props) => ({
-        sessionLength: prevState.sessionLength -1,
-        timeLeft: (prevState.sessionLength - 1).toString() + ":00"
-      }));
-    }
-    if(this.state.workOrBreak === "Break Session") {
-      this.setState((prevState, props) => ({
-        sessionLength: prevState.sessionLength + 1
-      }));
-    }
-  }
+  
 
   incrementBreak = () => {
     if(this.state.breakLength + 1 > 60){
       return;
     }
-    if(this.state.workOrBreak === "Break Sesssion") {
-      this.setState((prevState, props) => ({
-        breakLength: prevState.breakLength + 1,
-        timeLeft: (prevState.breakLength + 1).toString() + ":00"
-      }));
+    if(this.state.breakLength <= 8) {
+      if(this.state.workOrBreak === "Break Sesssion") {
+        this.setState((prevState, props) => ({
+          breakLength: prevState.breakLength + 1,
+          timeLeft: "0" + (prevState.breakLength + 1).toString() + ":00"
+        }));
+      }
+    }
+    if(this.state.breakLength >= 9 ) {
+      if(this.state.workOrBreak === "Break Sesssion") {
+        this.setState((prevState, props) => ({
+          breakLength: prevState.breakLength + 1,
+          timeLeft: (prevState.breakLength + 1).toString() + ":00"
+        }));
+      }
     }
     if(this.state.workOrBreak === "Work Session") {
       this.setState((prevState, props) => ({
@@ -112,15 +135,52 @@ class App extends Component {
     }
   }
 
+  decrementSession = () => {
+    if(this.state.sessionLength - 1 <= 0) {
+      return;
+    }
+    if(this.state.sessionLength <= 10) {
+      if (this.state.workOrBreak === "Work Session") {
+        this.setState((prevState, props) => ({
+          sessionLength: prevState.sessionLength -1,
+          timeLeft: "0" + (prevState.sessionLength - 1).toString() + ":00"
+        }));
+      }
+    }
+    if(this.state.sessionLength >= 11){
+      if (this.state.workOrBreak === "Work Session") {
+        this.setState((prevState, props) => ({
+          sessionLength: prevState.sessionLength -1,
+          timeLeft: (prevState.sessionLength - 1).toString() + ":00"
+        }));
+      }
+    }
+    if(this.state.workOrBreak === "Break Session") {
+      this.setState((prevState, props) => ({
+        sessionLength: prevState.sessionLength + 1
+      }));
+    }
+  }
+
   decrementBreak = () => {
     if(this.state.breakLength - 1 <= 0) {
       return;
     }
-    if(this.state.workOrBreak === "Break Sesssion") {
-      this.setState((prevState, props) => ({
-        breakLength: prevState.breakLength - 1,
-        timeLeft: (prevState.breakLength - 1).toString() + ":00"
-      }));
+    if(this.state.breakLength <= 10 ) {
+      if(this.state.workOrBreak === "Break Sesssion") {
+        this.setState((prevState, props) => ({
+          breakLength: prevState.breakLength - 1,
+          timeLeft: "0" + (prevState.breakLength - 1).toString() + ":00"
+        }));
+      }
+    }
+    if(this.state.breakLength >= 11 ) {
+      if(this.state.workOrBreak === "Break Sesssion") {
+        this.setState((prevState, props) => ({
+          breakLength: prevState.breakLength - 1,
+          timeLeft: (prevState.breakLength - 1).toString() + ":00"
+        }));
+      }
     }
     if(this.state.workOrBreak === "Work Session") {
       this.setState((prevState, props) => ({
@@ -130,6 +190,7 @@ class App extends Component {
   }
 
   resetCountdown = () => {  
+    this.stopSound();
     this.setState({ 
       sessionLength: 25,
       breakLength: 5, 
@@ -177,18 +238,20 @@ class App extends Component {
         window.clearInterval(myTimer);
         let timeLeftSet;
         if(this.state.breakLength >= 10) {
-          timeLeftSet = this.state.breakLength.toString() + ":00";
+          timeLeftSet = this.state.breakLength.toString() + ":01";
         }
         if(this.state.breakLength < 10) {
-          timeLeftSet = "0" + this.state.breakLength.toString() + ":00";
+          timeLeftSet = "0" + this.state.breakLength.toString() + ":01";
         }
         this.setState({
           workOrBreak: "Break Session",
           timeLeft: timeLeftSet
         })
+        this.playSound();
         setTimeout(() => {
           myTimer = window.setInterval(this.updateText, 1000);
-        }, 500);
+        }, 400);
+       
       }
     }
 
@@ -222,25 +285,28 @@ class App extends Component {
           timeLeft: clockTime
         })
       }
-      if (total === 0) {  //after timer reaches 00:00
+      if (total === -1) {  //after timer reaches 00:00
         window.clearInterval(myTimer);
         let timeLeftSet;
         if(this.state.sessionLength >= 10) {
-          timeLeftSet = this.state.sessionLength.toString() + ":00";
+          timeLeftSet = this.state.sessionLength.toString() + ":01";
         }
         if(this.state.sessionLength < 10) {
-          timeLeftSet = "0" + this.state.sessionLength.toString() + ":00";
+          timeLeftSet = "0" + this.state.sessionLength.toString() + ":01";
         }
         this.setState({
           workOrBreak: "Work Session",
           timeLeft: timeLeftSet
         })
+        this.playSound();
         setTimeout(() => {
           myTimer = window.setInterval(this.updateText, 1000);
-        }, 1000);
+        }, 400);
       }
     }
   }
+
+
 
   stopStartCountdown = () => {
     if(this.state.timerRunning === false){
